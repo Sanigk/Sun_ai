@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sun AI | ورود و ثبت‌نام</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#120a2e;--card:#1d1245;--ink:#f6f2ff;--mute:#b3a8e0;--pink:#ff3ea5;--cyan:#27f0ff;--sun:#ffd23f;--line:#3a2a7a}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:"Vazirmatn",Tahoma,sans-serif;background:radial-gradient(circle at 85% 0,#3a1670 0,transparent 45%),radial-gradient(circle at 0 100%,#0b3a68 0,transparent 45%),var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:100%;max-width:400px}
+h1{font-size:2.6rem;font-weight:800;margin:0 0 4px;text-align:center;color:var(--sun);text-shadow:0 0 18px rgba(255,210,63,.55)}
+.sub{text-align:center;color:var(--mute);margin:0 0 22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 0 28px rgba(255,62,165,.18)}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tabs button{flex:1;padding:10px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--mute);font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 0 14px rgba(255,62,165,.6)}
+label{display:block;margin:12px 0 6px;font-size:.9rem;color:var(--mute)}
+input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#120a2e;color:var(--ink);font:inherit;direction:ltr;text-align:left}
+input:focus,button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.go{width:100%;margin-top:18px;padding:13px;border:0;border-radius:12px;background:linear-gradient(90deg,var(--cyan),var(--pink));color:#120a2e;font:inherit;font-weight:800;font-size:1rem;cursor:pointer}
+.go:disabled{opacity:.6}
+.msg{margin-top:14px;padding:10px 12px;border-radius:10px;font-size:.92rem;display:none}
+.msg.err{display:block;background:rgba(255,62,165,.15);color:#ffb3dc}
+.msg.ok{display:block;background:rgba(39,240,255,.12);color:#9ff7ff}
+.hide{display:none}
+.credit{font-size:3rem;font-weight:800;color:var(--cyan);text-shadow:0 0 16px rgba(39,240,255,.6);text-align:center;margin:8px 0 0}
+.who{text-align:center;color:var(--mute);direction:ltr;word-break:break-all}
+.out{width:100%;margin-top:18px;padding:11px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .3s}}
+</style>
+</head>
+<body>
+<main class="box">
+  <h1>Sun AI</h1>
+  <p class="sub">ساخت تصویر، ویدئو و پرامپت با هوش مصنوعی</p>
+
+  <section class="card" id="authView">
+    <div class="tabs">
+      <button id="tabLogin" class="on" type="button">ورود</button>
+      <button id="tabSignup" type="button">ثبت‌نام</button>
+    </div>
+    <label for="email">ایمیل</label>
+    <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+    <label for="pass">رمز عبور</label>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="حداقل ۶ کاراکتر">
+    <button class="go" id="submit" type="button">ورود به حساب</button>
+    <div class="msg" id="msg" role="status"></div>
+  </section>
+
+  <section class="card hide" id="homeView">
+    <p class="who" id="who"></p>
+    <p class="sub" style="margin-bottom:0">اعتبار شما</p>
+    <p class="credit" id="credits">…</p>
+    <button class="out" id="logout" type="button">خروج از حساب</button>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://exzthutgachlkdqtegob.supabase.co";
+const SUPABASE_KEY = "sb_publishable_dgPRaRZm3w5pthXPOB-MUA_s4fV8sie";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+let mode = "login";
+
+function say(text, type){ const m=$("msg"); m.textContent=text; m.className="msg "+(type||""); }
+function setMode(m){
+  mode = m;
+  $("tabLogin").classList.toggle("on", m==="login");
+  $("tabSignup").classList.toggle("on", m==="signup");
+  $("submit").textContent = m==="login" ? "ورود به حساب" : "ساخت حساب جدید";
+  $("pass").autocomplete = m==="login" ? "current-password" : "new-password";
+  say("");
+}
+$("tabLogin").onclick = () => setMode("login");
+$("tabSignup").onclick = () => setMode("signup");
+
+function errorText(e){
+  const t = (e && e.message || "").toLowerCase();
+  if (t.includes("invalid login")) return "ایمیل یا رمز عبور اشتباهه.";
+  if (t.includes("already registered")) return "با این ایمیل قبلاً ثبت‌نام شده. وارد شو.";
+  if (t.includes("at least 6")) return "رمز عبور باید حداقل ۶ کاراکتر باشه.";
+  if (t.includes("valid email") || t.includes("invalid email")) return "ایمیل واردشده درست نیست.";
+  if (t.includes("not confirmed")) return "اول ایمیلت رو تأیید کن (لینک داخل ایمیل).";
+  if (t.includes("rate limit")) return "تعداد تلاش‌ها زیاد بود. چند دقیقه بعد دوباره امتحان کن.";
+  return "خطا: " + (e && e.message ? e.message : "نامشخص");
+}
+
+$("submit").onclick = async () => {
+  const email = $("email").value.trim(), password = $("pass").value;
+  if (!email || !password) return say("ایمیل و رمز عبور رو وارد کن.", "err");
+  $("submit").disabled = true; say("");
+  try {
+    if (mode === "signup") {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) throw error;
+      if (!data.session) say("حساب ساخته شد. لینک تأیید به ایمیلت رفت؛ تأییدش کن و بعد وارد شو.", "ok");
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    }
+  } catch (e) { say(errorText(e), "err"); }
+  $("submit").disabled = false;
+};
+
+$("logout").onclick = () => sb.auth.signOut();
+
+async function showSession(session){
+  const logged = !!session;
+  $("authView").classList.toggle("hide", logged);
+  $("homeView").classList.toggle("hide", !logged);
+  if (!logged) return;
+  $("who").textContent = session.user.email;
+  $("credits").textContent = "…";
+  const { data, error } = await sb.from("profiles").select("credits").eq("id", session.user.id).single();
+  $("credits").textContent = error ? "؟" : data.credits;
+}
+
+sb.auth.onAuthStateChange((_e, session) => { showSession(session); });
+sb.auth.getSession().then(({ data }) => showSession(data.session));
+</script>
+</body>
+</html>
